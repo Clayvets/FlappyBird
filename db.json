@@ -1,0 +1,52 @@
+{
+    "leaders": 
+    {
+        "scores":   [
+            {
+              "userId": 1,
+              "value": 5,
+              "name":"lololex"
+            },
+            {
+              "userId":2,
+              "value": 2
+            },
+            {
+              "userId":3,
+              "value": 4
+            },
+            {
+              "userId":4,
+              "value": 14
+            },
+            {
+              "userId":5,
+              "value": 10
+            }
+              ] 
+    },
+    "users":{
+        "users":[
+            {
+                "id":1,
+                "name":"lololex",
+                "score": 5
+            },
+            {
+                "id":2,
+                "name":"waroo"
+            }
+        ]
+
+    },
+    "Achievements":{
+            "data":[
+                {
+                    "id":1,
+                    "title":"Flying Bird",
+                    "desc": "Juega 100 veces mas de 10 tubos"
+                },{},{},{}
+            ]
+    }
+  }
+  
