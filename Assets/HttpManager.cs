@@ -10,7 +10,7 @@ public class HttpManager : MonoBehaviour
     [SerializeField]
     private string URL;
     [SerializeField]  Text name;
-    [SerializeField]  Text score;
+    [SerializeField]  Text scoreT;
 
     // Start is called before the first frame update
     void Start()
@@ -42,16 +42,26 @@ public class HttpManager : MonoBehaviour
             {
                 Debug.Log(score.userId +" | "+score.value);
             }
+
+            for (int i = 0; i < resData.scores.Length; i++)
+            {
+                Score(resData.scores[i]);
+            }
+            
         }
         else
         {
             Debug.Log(www.error);
         }
+
+
     }
 
     public void Score(ScoreData scoreData)
     {
-        
+
+        name.text += scoreData.name + "\n";
+        scoreT.text += scoreData.value + "\n";
     }
    
 }
@@ -62,6 +72,8 @@ public class ScoreData
 {
     public int userId;
     public int value;
+    public string name;
+    
 
 }
 
