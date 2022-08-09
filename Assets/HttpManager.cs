@@ -2,12 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
+using UnityEngine.UI;
 
 public class HttpManager : MonoBehaviour
 {
 
     [SerializeField]
     private string URL;
+    [SerializeField]  Text name;
+    [SerializeField]  Text score;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -43,6 +47,11 @@ public class HttpManager : MonoBehaviour
         {
             Debug.Log(www.error);
         }
+    }
+
+    public void Score(ScoreData scoreData)
+    {
+        
     }
    
 }

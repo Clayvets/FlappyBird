@@ -5,23 +5,27 @@
             {
               "userId": 1,
               "value": 5,
-              "name":"lololex"
+              "name":"Lololex"
             },
             {
               "userId":2,
-              "value": 2
+              "value": 2,
+              "name":"Magister"
             },
             {
               "userId":3,
-              "value": 4
+              "value": 4,
+              "name":"Lunaysa"
             },
             {
               "userId":4,
-              "value": 14
+              "value": 14,
+              "name":"ElRubiusOMG"
             },
             {
               "userId":5,
-              "value": 10
+              "value": 10,
+              "name":"JuanGranizo"
             }
               ] 
     },
