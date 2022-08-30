@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using Newtonsoft.Json;
 
 public class HttpManager : MonoBehaviour
 {
@@ -13,20 +14,41 @@ public class HttpManager : MonoBehaviour
 
     private string Token;
     private string Username;
+    private int maxScore;
 
-    [SerializeField]  Text name;
-    [SerializeField]  Text scoreT;
+    [SerializeField] Text name;
+    [SerializeField] Text scoreT;
 
-    // Start is called before the first frame update
+    void Awake()
+    {
+        GameObject[] httpManager = GameObject.FindGameObjectsWithTag("httpManager");
+
+        if (httpManager.Length > 1)
+        {
+            Destroy(this.gameObject);
+        }
+
+        DontDestroyOnLoad(this.gameObject);
+    }
     void Start()
     {
+        
         Token = PlayerPrefs.GetString("token");
         Username = PlayerPrefs.GetString("username");
+        maxScore = PlayerPrefs.GetInt("maxScore");
+
         Debug.Log("TOKEN:" + Token);
 
         StartCoroutine(ObtenerPerfil());
-        
 
+        Debug.Log(Username);
+    }
+
+    public static void Salir()
+    {
+        PlayerPrefs.SetString("token", null);
+        PlayerPrefs.SetString("username", null);
+        PlayerPrefs.SetInt("maxScore", 0);
     }
 
     public void ClickGetScores()
@@ -38,8 +60,8 @@ public class HttpManager : MonoBehaviour
     {
         AuthData data = new AuthData();
 
-        data.usuario = GameObject.Find("Usuario").GetComponent<InputField>().text;
-        data.contraseña = GameObject.Find("Contraseña").GetComponent<InputField>().text;
+        data.username = GameObject.Find("Usuario").GetComponent<InputField>().text;
+        data.password = GameObject.Find("Contraseña").GetComponent<InputField>().text;
 
         string postData = JsonUtility.ToJson(data);
         return postData;
@@ -56,10 +78,33 @@ public class HttpManager : MonoBehaviour
         StartCoroutine(Ingreso(postData));
     }
 
+    public void Record()
+    {
+        int scoreActual = Score.score;
+
+        if (scoreActual > maxScore)
+        {
+            UserData data = new UserData();
+
+            data.username = Username;
+            data.score = scoreActual;
+
+            maxScore = scoreActual;
+            PlayerPrefs.SetInt("maxScore", scoreActual);
+
+            string postData = JsonUtility.ToJson(data);
+            StartCoroutine(SetScore(postData));
+        }
+        
+        
+    }
+
     IEnumerator GetScores()
     {
-        string url = URL + "/api/usuarios" + "?limit=5&sort=true";
+        string url = URL + "/api/usuarios?limit=5&sort=true";
         UnityWebRequest www = UnityWebRequest.Get(url);
+        www.SetRequestHeader("content-type", "application/json");
+        Debug.Log(Token);
         www.SetRequestHeader("x-token", Token);
 
         yield return www.SendWebRequest();
@@ -68,28 +113,26 @@ public class HttpManager : MonoBehaviour
         {
             Debug.Log("NETWORK ERROR " + www.error);
         }
-        else if(www.responseCode == 200){
+        else if (www.responseCode == 200) {
             //Debug.Log(www.downloadHandler.text);
-            Scores resData = JsonUtility.FromJson<Scores>(www.downloadHandler.text);
+            Scores resData = JsonConvert.DeserializeObject<Scores>(www.downloadHandler.text);
 
-            
-            foreach (ScoreData score in resData.scores)
-            {
-                Debug.Log(score.userId +" | "+score.value);
-            }
+            Debug.Log(www.downloadHandler.text);
 
-            for (int i = 0; i < resData.scores.Length; i++)
+            Text TablaNombre = GameObject.Find("Name").GetComponent<Text>();
+            Text TablaPuntos = GameObject.Find("Score").GetComponent<Text>();
+
+            foreach (ScoreData score in resData.usuarios)
             {
-                Score(resData.scores[i]);
-            }
-            
+                Debug.Log(score.username + " | " + score.score);
+                TablaNombre.text += score.username + "\n";
+                TablaPuntos.text += score.score + "\n";
+            }    
         }
         else
         {
             Debug.Log(www.error);
         }
-
-
     }
 
     IEnumerator Registro(string postData)
@@ -97,7 +140,7 @@ public class HttpManager : MonoBehaviour
         Debug.Log("Registro: " + postData);
 
         string url = URL + "/api/usuarios";
-        UnityWebRequest www = UnityWebRequest.Put(url, postData);
+        UnityWebRequest www = UnityWebRequest.Put(url, postData); //mandando los datos a la nube del profesor
         www.method = "POST";
         www.SetRequestHeader("content-type", "application/json");
 
@@ -113,7 +156,7 @@ public class HttpManager : MonoBehaviour
             //Debug.Log(www.downloadHandler.text);
             AuthData resData = JsonUtility.FromJson<AuthData>(www.downloadHandler.text);
 
-            Debug.Log("Registrado" + resData.usuarioPostman.username + ", id:" + resData.usuarioPostman._id);
+            Debug.Log("Registrado" + resData.usuario.username + ", id:" + resData.usuario._id);
             
             StartCoroutine(Ingreso(postData));
             
@@ -145,15 +188,16 @@ public class HttpManager : MonoBehaviour
         }
         else if (www.responseCode == 200)
         {
-            //Debug.Log(www.downloadHandler.text);
+            Debug.Log(www.downloadHandler.text);
             AuthData resData = JsonUtility.FromJson<AuthData>(www.downloadHandler.text);
 
-            Debug.Log("Autenticado" + resData.usuarioPostman.username + ", id:" + resData.usuarioPostman._id);
+           Debug.Log("Autenticado" + resData.usuario.username + ", id:" + resData.usuario._id);
             Debug.Log("TOKEN: " + resData.token);
 
             PlayerPrefs.SetString("token", resData.token);
-            PlayerPrefs.SetString("username", resData.usuarioPostman.username);
+            PlayerPrefs.SetString("username", resData.usuario.username);
             SceneManager.LoadScene("SampleScene");
+            
 
         }
         else
@@ -167,7 +211,7 @@ public class HttpManager : MonoBehaviour
 
     IEnumerator ObtenerPerfil()
     {
-        string url = URL + "/api/usuarios" + Username;
+        string url = URL + "/api/usuarios/" + Username;
         UnityWebRequest www = UnityWebRequest.Get(url);
         www.SetRequestHeader("x-token", Token);
 
@@ -182,8 +226,10 @@ public class HttpManager : MonoBehaviour
             //Debug.Log(www.downloadHandler.text);
             AuthData resData = JsonUtility.FromJson<AuthData>(www.downloadHandler.text);
 
-            Debug.Log("Token valido" + resData.usuarioPostman.username + ", id:" + resData.usuarioPostman._id + " y su score es: " + resData.usuarioPostman.score);
+            Debug.Log("Token valido" + resData.usuario.username + ", id:" + resData.usuario._id + " y su score es: " + resData.usuario.score);
             SceneManager.LoadScene("SampleScene");
+            
+
         }
         else
         {
@@ -192,17 +238,16 @@ public class HttpManager : MonoBehaviour
         }
     }
 
-    IEnumerator SetScore()
+    IEnumerator SetScore(string postData)
     {
         Debug.Log("Patch score:");
 
+        string url = URL + "/api/usuarios";
 
-        string url = URL + "/api/usuarios" + "?limit=5&sort=true";
-        UnityWebRequest www = UnityWebRequest.Put(url,Username);
+        UnityWebRequest www = UnityWebRequest.Put(url, postData);
         www.method = "PATCH";
         www.SetRequestHeader("content-type", "application/json");
         www.SetRequestHeader("x-token", Token);
-
 
         yield return www.SendWebRequest();
 
@@ -214,18 +259,12 @@ public class HttpManager : MonoBehaviour
         {
             //Debug.Log(www.downloadHandler.text);
             AuthData resData = JsonUtility.FromJson<AuthData>(www.downloadHandler.text);
-
-            
-            
-
-
         }
         else
         {
             Debug.Log(www.error);
             Debug.Log(www.downloadHandler.text);
         }
-
 
     }
 }
@@ -234,33 +273,35 @@ public class HttpManager : MonoBehaviour
 [System.Serializable]
 public class ScoreData
 {
-    public int userId;
-    public int value;
-    public string name;
-    
-
+    public string _id { get; set; }
+    public string username { get; set; }
+    public string password { get; set; }
+    public bool estado { get; set; }
+    public int score { get; set; }
 }
+
 
 [System.Serializable]
 public class Scores
 {
-    public ScoreData[] scores;
+    public List<ScoreData> usuarios;
+    
 }
 
 [System.Serializable]
 public class AuthData
 {
-    public string usuario;
-    public string contraseña;
-    public UserData usuarioPostman;
+    public string username;
+    public string password;
+    public UserData usuario;
     public string token;
 }
 
+[System.Serializable]
 public class UserData
 {
     public string _id;
     public string username;
     public bool estado;
     public int score;
-
 }
