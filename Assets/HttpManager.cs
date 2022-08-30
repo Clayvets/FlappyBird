@@ -158,9 +158,7 @@ public class HttpManager : MonoBehaviour
 
             Debug.Log("Registrado" + resData.usuario.username + ", id:" + resData.usuario._id);
             
-            StartCoroutine(Ingreso(postData));
-            
-
+            StartCoroutine(Ingreso(postData));           
         }
         else
         {
@@ -192,13 +190,17 @@ public class HttpManager : MonoBehaviour
             AuthData resData = JsonUtility.FromJson<AuthData>(www.downloadHandler.text);
 
            Debug.Log("Autenticado" + resData.usuario.username + ", id:" + resData.usuario._id);
-            Debug.Log("TOKEN: " + resData.token);
+           Debug.Log("TOKEN: " + resData.token);
 
-            PlayerPrefs.SetString("token", resData.token);
-            PlayerPrefs.SetString("username", resData.usuario.username);
-            SceneManager.LoadScene("SampleScene");
+           PlayerPrefs.SetString("token", resData.token);
+           PlayerPrefs.SetString("username", resData.usuario.username);
+
+           Token = resData.token;
+           Username = resData.usuario.username;
+
+           SceneManager.LoadScene("SampleScene");
+
             
-
         }
         else
         {
